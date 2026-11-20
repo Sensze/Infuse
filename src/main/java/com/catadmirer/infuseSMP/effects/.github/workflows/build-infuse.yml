@@ -1,7 +1,5 @@
 name: Build Infuse jar
 
-# Builds automatically whenever a commit is pushed to the dev/2.4.5 branch,
-# and can also be started by hand from the Actions tab.
 on:
   push:
     branches: [ "dev/2.4.5" ]
