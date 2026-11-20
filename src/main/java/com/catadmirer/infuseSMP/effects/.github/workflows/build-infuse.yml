@@ -32,3 +32,4 @@ jobs:
         with:
           name: Infuse-jar
           path: build/libs/*.jar
+# test
