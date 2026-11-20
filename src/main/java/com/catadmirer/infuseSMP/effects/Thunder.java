@@ -89,7 +89,9 @@ public class Thunder extends InfuseEffect {
                 // Striking all players within the radius
                 for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
                     if (!(entity instanceof Player target)) continue;
-                    if (plugin.getDataManager().doesTrust(target, owner)) continue;
+                    if (target.equals(owner)) continue;
+                    // The spark user's trust list decides who is spared (same order as every other effect)
+                    if (plugin.getTrustManager().doesTrust(owner, target)) continue;
                     if (!plugin.getRegionBlocker().canBeTargetedBySpark(target)) continue;
 
                     // Incrementing the hit count for this entity and making sure they aren't hit too many times
@@ -201,7 +203,7 @@ public class Thunder extends InfuseEffect {
         Bukkit.getScheduler().runTaskLater(plugin, t -> chainLightning(new ArrayList<>(List.of(attacker, target))), 20L);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void thunderAutoChanneling(EntityDamageByEntityEvent event) {
         // Ignoring non-trident damage
         if (!(event.getDamager() instanceof Trident trident)) return;
@@ -213,7 +215,7 @@ public class Thunder extends InfuseEffect {
 
         // Only summoning lightning if the target is a living entity
         if (!(event.getEntity() instanceof LivingEntity target)) return;
-        if (target instanceof Player p && plugin.getDataManager().doesTrust(attacker, p)) return;
+        if (target instanceof Player p && plugin.getTrustManager().doesTrust(attacker, p)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
 
         strikeLighting(target, attacker);
