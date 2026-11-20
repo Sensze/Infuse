@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -31,6 +32,16 @@ import org.bukkit.util.Vector;
 import java.util.UUID;
 
 public class Feather extends InfuseEffect {
+    /** Upward speed (blocks per tick) after a mace hit.  1.8 is about 17 blocks high (the original value). */
+    private static final double MACE_HIT_LAUNCH_VELOCITY = 1.8;
+    /** Same, but for the augmented version of the effect.  2.17 is about 23 blocks high. */
+    private static final double AUGMENTED_MACE_HIT_LAUNCH_VELOCITY = 2.17;
+
+    /** Damage multiplier on a mace hit: 1.1 = +10%. */
+    private static final double MACE_HIT_DAMAGE_MULTIPLIER = 1.1;
+    /** Same, but for the augmented version.  1.15 = +15%. */
+    private static final double AUGMENTED_MACE_HIT_DAMAGE_MULTIPLIER = 1.15;
+
     public Feather() {
         this(false);
     }
@@ -156,7 +167,9 @@ public class Feather extends InfuseEffect {
     @EventHandler
     public void onPlayerFallDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (event.getCause() != DamageCause.FALL) return;
+        // Landing on pointed dripstone uses its own damage type (stalagmite), so it is checked as well as normal fall damage
+        boolean isFallDamage = event.getCause() == DamageCause.FALL || event.getDamageSource().getDamageType() == DamageType.STALAGMITE;
+        if (!isFallDamage) return;
         if (!plugin.getDataManager().hasEffect(player, this)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
@@ -203,9 +216,13 @@ public class Feather extends InfuseEffect {
         World world = startLoc.getWorld();
         Location particleLoc = event.getDamager().getLocation();
         world.spawnParticle(Particle.GUST_EMITTER_SMALL, particleLoc, 1, 0, 0, 0, 0);
-        attacker.setVelocity(new Vector(0, 1.8, 0));
 
-        double multiplier = 1.1;
+        // Only the augmented version of Feather gets the stronger launch and damage bonus
+        boolean augmented = plugin.getDataManager().hasEffect(attacker, getAugmentedVersion(), true);
+
+        attacker.setVelocity(new Vector(0, augmented ? AUGMENTED_MACE_HIT_LAUNCH_VELOCITY : MACE_HIT_LAUNCH_VELOCITY, 0));
+
+        double multiplier = augmented ? AUGMENTED_MACE_HIT_DAMAGE_MULTIPLIER : MACE_HIT_DAMAGE_MULTIPLIER;
         event.setDamage(event.getDamage() * multiplier);
     }
 }
