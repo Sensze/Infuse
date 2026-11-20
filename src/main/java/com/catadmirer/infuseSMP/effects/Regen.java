@@ -8,7 +8,6 @@ import com.catadmirer.infuseSMP.managers.CooldownManager;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.FoodProperties;
 import org.bukkit.Sound;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -22,6 +21,11 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.UUID;
 
 public class Regen extends InfuseEffect {
+    /** Regeneration level for the spark.  The amplifier is 0-indexed, so 3 means Regeneration IV. */
+    private static final int SPARK_REGEN_AMPLIFIER = 3;
+    /** How long the spark's regeneration lasts, in ticks (20 ticks = 1 second). */
+    private static final int SPARK_REGEN_TICKS = 4 * 20;
+
     public Regen() {
         this(false);
     }
@@ -53,6 +57,10 @@ public class Regen extends InfuseEffect {
         long duration = plugin.getMainConfig().duration(this);
 
         CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
+
+        // The spark gives the user Regeneration IV for 4 seconds.
+        // The permanent Regeneration I from equipping the effect is kept underneath and comes back when this ends.
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, SPARK_REGEN_TICKS, SPARK_REGEN_AMPLIFIER, false, true));
 
         owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
     }
@@ -86,17 +94,8 @@ public class Regen extends InfuseEffect {
         if (!plugin.getDataManager().hasEffect(player, this)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
+        // Passive: every hit gives Regeneration II for 3 seconds
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 1, false, false));
-        if (CooldownManager.isEffectActive(player.getUniqueId(), "regen")) {
-            final double radius = plugin.getMainConfig().regenSparkHealTrustedRadius();
-            for (Entity loopentity : player.getNearbyEntities(radius, radius, radius)) {
-                if (loopentity instanceof Player otherplayer) {
-                    if (plugin.getTrustManager().doesTrust(player, otherplayer) && !plugin.getRegionBlocker().isEffectBlocked(otherplayer, this)) {
-                        otherplayer.heal(event.getDamage() / 2);
-                    }
-                }
-            }
-        }
     }
 
     @EventHandler
