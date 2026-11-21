@@ -72,6 +72,11 @@ import java.util.Scanner;
 import java.util.UUID;
 
 public class Apophis extends InfuseEffect {
+    /** Set to false to stop Apophis from changing the user's skin. */
+    private static final boolean DISGUISE_SKIN = false;
+    /** Set to false to stop Apophis from hiding the user's name (chat name and tab list). */
+    private static final boolean DISGUISE_NAME = true;
+
     public static final NamespacedKey LOOTING_KEY = new NamespacedKey("infuse", "apophis_looting");
     public static final NamespacedKey APOPHIS_BOOST = new NamespacedKey("infuse", "apophis_boost");
     public static final NamespacedKey APOPHIS_SPARK_BOOST = new NamespacedKey("infuse", "apophis_spark_boost");
@@ -316,13 +321,17 @@ public class Apophis extends InfuseEffect {
         initDisguise(owner);
 
         // Changing the player's skin
-        PlayerProfile profile = owner.getPlayerProfile();
-        profile.setProperty(APOPHIS_SKIN);
-        owner.setPlayerProfile(profile);
+        if (DISGUISE_SKIN) {
+            PlayerProfile profile = owner.getPlayerProfile();
+            profile.setProperty(APOPHIS_SKIN);
+            owner.setPlayerProfile(profile);
+        }
 
         // Hiding the player's name
-        owner.displayName(APOPHIS_NAME);
-        owner.playerListName(APOPHIS_NAME);
+        if (DISGUISE_NAME) {
+            owner.displayName(APOPHIS_NAME);
+            owner.playerListName(APOPHIS_NAME);
+        }
     }
 
     public void removeDisguise(Player owner) {
